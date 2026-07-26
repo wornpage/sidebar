@@ -18,7 +18,8 @@
 	let favorites = $state<Set<string>>(new Set());
 	let recentRoutes = $state<string[]>([]);
 	let contextMenu = $state<{ x: number; y: number; id: string } | null>(null);
-	let indicatorStyle = $state('');
+	let indicatorEl: HTMLDivElement | undefined = $state();
+	let contextMenuEl: HTMLDivElement | undefined = $state();
 
 	$effect(() => {
 		const path = activeHref;
@@ -72,6 +73,13 @@
 		contextMenu = { x: e.clientX, y: e.clientY, id };
 	}
 	function closeContextMenu() { contextMenu = null; }
+	// Set CSS custom properties for context menu positioning (CSP-safe)
+	$effect(() => {
+		if (contextMenu && contextMenuEl) {
+			contextMenuEl.style.setProperty('--worn-cm-x', `${contextMenu.x}px`);
+			contextMenuEl.style.setProperty('--worn-cm-y', `${contextMenu.y}px`);
+		}
+	});
 	function hideItem(id: string) {
 		const next = new Set(favorites);
 		next.delete(id);
@@ -161,12 +169,13 @@
 	});
 
 	function updateIndicator() {
-		if (!navEl || collapsed) { indicatorStyle = ''; return; }
+		if (!navEl || !indicatorEl || collapsed) { return; }
 		const active = navEl.querySelector<HTMLElement>('.worn-nav-item.active');
 		if (active) {
 			const navRect = navEl.getBoundingClientRect();
 			const rect = active.getBoundingClientRect();
-			indicatorStyle = `top:${rect.top - navRect.top}px;height:${rect.height}px;`;
+			indicatorEl.style.setProperty('--worn-indicator-top', `${rect.top - navRect.top}px`);
+			indicatorEl.style.setProperty('--worn-indicator-height', `${rect.height}px`);
 		}
 	}
 
@@ -206,7 +215,8 @@
 </div>
 
 <nav class="worn-nav" bind:this={navEl}>
-	<div class="worn-active-indicator" style={indicatorStyle}></div>
+	<div class="worn-active-indicator" bind:this={indicatorEl}
+	style="top: var(--worn-indicator-top); height: var(--worn-indicator-height);"></div>
 
 	{#if recentItems.length > 0 && !filterText}
 		<div class="worn-section-label">Recent</div>
@@ -248,7 +258,8 @@
 
 {#if contextMenu}
 	<div class="worn-menu-backdrop" onclick={closeContextMenu}></div>
-	<div class="worn-context-menu" style="left:{contextMenu.x}px;top:{contextMenu.y}px">
+	<div class="worn-context-menu" bind:this={contextMenuEl}
+	style="left: var(--worn-cm-x, 0px); top: var(--worn-cm-y, 0px)">
 		<button type="button" onclick={() => { toggleFavorite(contextMenu.id); closeContextMenu(); }}>{favorites.has(contextMenu.id) ? '📌 Unpin' : '📌 Pin'}</button>
 		<button type="button" onclick={() => hideItem(contextMenu.id)}>👁 Hide</button>
 		<button type="button" onclick={resetAll}>🔄 Reset all</button>
@@ -327,7 +338,9 @@
 		transition: top 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
 		pointer-events: none; z-index: 0; opacity: 0;
 	}
-	.worn-active-indicator:not([style=""]) { opacity: 0.15; }
+	.worn-active-indicator[style*="--worn-indicator-top"] {
+		opacity: 0.15;
+	}
 
 	.worn-reorder-btn {
 		background: none; border: 0;
