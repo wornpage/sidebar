@@ -17,9 +17,7 @@
 	let focusedIndex = $state(-1);
 	let favorites = $state<Set<string>>(new Set());
 	let recentRoutes = $state<string[]>([]);
-	let contextMenu = $state<{ x: number; y: number; id: string } | null>(null);
-	let indicatorEl: HTMLDivElement | undefined = $state();
-	let contextMenuEl: HTMLDivElement | undefined = $state();
+	let contextMenu = $state<string | null>(null);
 
 	$effect(() => {
 		const path = activeHref;
@@ -70,16 +68,9 @@
 
 	function showContextMenu(e: MouseEvent, id: string) {
 		e.preventDefault();
-		contextMenu = { x: e.clientX, y: e.clientY, id };
+		contextMenu = id;
 	}
 	function closeContextMenu() { contextMenu = null; }
-	// Set CSS custom properties for context menu positioning (CSP-safe)
-	$effect(() => {
-		if (contextMenu && contextMenuEl) {
-			contextMenuEl.style.setProperty('--worn-cm-x', `${contextMenu.x}px`);
-			contextMenuEl.style.setProperty('--worn-cm-y', `${contextMenu.y}px`);
-		}
-	});
 	function hideItem(id: string) {
 		const next = new Set(favorites);
 		next.delete(id);
@@ -163,27 +154,10 @@
 
 	let navEl: HTMLElement | undefined = $state();
 
-	$effect(() => {
-		const radii: Record<string, string> = { sm: '4px', md: '8px', lg: '12px', pill: '999px' };
-		try { document.documentElement.style.setProperty('--worn-nav-radius', radii[rounded] || '8px'); } catch {}
-	});
-
-	function updateIndicator() {
-		if (!navEl || !indicatorEl || collapsed) { return; }
-		const active = navEl.querySelector<HTMLElement>('.worn-nav-item.active');
-		if (active) {
-			const navRect = navEl.getBoundingClientRect();
-			const rect = active.getBoundingClientRect();
-			indicatorEl.style.setProperty('--worn-indicator-top', `${rect.top - navRect.top}px`);
-			indicatorEl.style.setProperty('--worn-indicator-height', `${rect.height}px`);
-		}
-	}
-
-	$effect(() => { activeHref; collapsed; requestAnimationFrame(() => updateIndicator()); });
 </script>
 
 {#snippet navLink(item: NavItem)}
-	<a href={item.href || '#'} class="worn-nav-item" class:active={isActive(item)} data-nav-id={item.id}
+	<a href={item.href || '#'} class="worn-nav-item" class:active={isActive(item)} class:is-context-anchor={contextMenu === item.id} data-nav-id={item.id}
 		aria-current={isActive(item) ? 'page' : undefined}
 		onclick={(e) => handleNav(e, item.href)}
 		oncontextmenu={(e) => showContextMenu(e, item.id)}
@@ -208,15 +182,14 @@
 	</a>
 {/snippet}
 
-<div class="worn-sidebar" class:is-collapsed={collapsed}>
+<div class="worn-sidebar" class:is-collapsed={collapsed} data-radius={rounded}>
 <div class="worn-sidebar-filter">
 	<input type="search" class="worn-filter-input" placeholder="Filter…" bind:value={filterText} onkeydown={handleKeydown} />
 	{#if filterText}<button type="button" class="worn-filter-clear" onclick={() => filterText = ''} aria-label="Clear filter">×</button>{/if}
 </div>
 
 <nav class="worn-nav" bind:this={navEl}>
-	<div class="worn-active-indicator" bind:this={indicatorEl}
-	style="top: var(--worn-indicator-top); height: var(--worn-indicator-height);"></div>
+	<div class="worn-active-indicator"></div>
 
 	{#if recentItems.length > 0 && !filterText}
 		<div class="worn-section-label">Recent</div>
@@ -258,10 +231,9 @@
 
 {#if contextMenu}
 	<div class="worn-menu-backdrop" onclick={closeContextMenu}></div>
-	<div class="worn-context-menu" bind:this={contextMenuEl}
-	style="left: var(--worn-cm-x, 0px); top: var(--worn-cm-y, 0px)">
-		<button type="button" onclick={() => { toggleFavorite(contextMenu.id); closeContextMenu(); }}>{favorites.has(contextMenu.id) ? '📌 Unpin' : '📌 Pin'}</button>
-		<button type="button" onclick={() => hideItem(contextMenu.id)}>👁 Hide</button>
+	<div class="worn-context-menu">
+		<button type="button" onclick={() => { toggleFavorite(contextMenu); closeContextMenu(); }}>{favorites.has(contextMenu) ? '📌 Unpin' : '📌 Pin'}</button>
+		<button type="button" onclick={() => hideItem(contextMenu)}>👁 Hide</button>
 		<button type="button" onclick={resetAll}>🔄 Reset all</button>
 	</div>
 {/if}
@@ -303,7 +275,13 @@
 	.worn-nav-item.active {
 		background: var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));
 		color: var(--worn-sidebar-accent-text, var(--cockpit-accent-text, #fff));
+		anchor-name: --worn-active-item;
 	}
+	.worn-nav-item.is-context-anchor { anchor-name: --worn-ctx; }
+	.worn-sidebar[data-radius="sm"] { --worn-nav-radius: 4px; }
+	.worn-sidebar[data-radius="md"] { --worn-nav-radius: 8px; }
+	.worn-sidebar[data-radius="lg"] { --worn-nav-radius: 12px; }
+	.worn-sidebar[data-radius="pill"] { --worn-nav-radius: 999px; }
 	.worn-nav-icon { flex-shrink: 0; display: flex; }
 	.worn-nav-icon svg { display: block; }
 	.worn-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -333,12 +311,15 @@
 
 	.worn-active-indicator {
 		position: absolute; left: 2px; width: calc(100% - 4px);
+		position-anchor: --worn-active-item;
+		top: anchor(--worn-active-item top);
+		height: anchor(--worn-active-item height);
 		background: var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));
 		border-radius: 999px;
-		transition: top 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+		transition: opacity 0.15s ease;
 		pointer-events: none; z-index: 0; opacity: 0;
 	}
-	.worn-active-indicator[style*="--worn-indicator-top"] {
+	.worn-sidebar:not(.is-collapsed) .worn-nav:has(.worn-nav-item.active) .worn-active-indicator {
 		opacity: 0.15;
 	}
 
@@ -355,6 +336,9 @@
 	.worn-menu-backdrop { position: fixed; inset: 0; z-index: 100; }
 	.worn-context-menu {
 		position: fixed; z-index: 101;
+		position-anchor: --worn-ctx;
+		left: anchor(right);
+		top: anchor(bottom);
 		background: var(--worn-sidebar-surface, var(--cockpit-surface, #fff));
 		border: 1px solid var(--worn-sidebar-border, var(--cockpit-border, #ddd));
 		border-radius: 6px;
