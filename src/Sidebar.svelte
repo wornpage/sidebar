@@ -167,7 +167,7 @@
 		{/if}
 		<span class="worn-nav-label">{item.label}</span>
 		{#if item.badge !== undefined && item.badge > 0}
-			<span class="worn-nav-badge" class:is-danger={item.badgeVariant === 'danger'}>{item.badge}</span>
+			<span class="worn-nav-badge" class:is-danger={item.badgeVariant === 'danger'} class:is-warning={item.badgeVariant === 'warning'}>{item.badge}</span>
 		{/if}
 		{#if favorites.has(item.id)}
 			<span class="worn-nav-reorder">
@@ -296,6 +296,7 @@
 		text-align: center;
 	}
 	.worn-nav-badge.is-danger { background: var(--worn-sidebar-danger, var(--cockpit-danger-text, #e74c3c)); color: #fff; }
+	.worn-nav-badge.is-warning { background: var(--worn-sidebar-warning, var(--cockpit-warning-text, #d97706)); color: #fff; }
 
 	.worn-section-label {
 		font-size: 9px; font-weight: 600; text-transform: uppercase;
