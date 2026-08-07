@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { NavItem } from './types.js';
 	import { sectionForActiveHref, activeSectionToForceOpen, initialOpenSections } from './sections.js';
+	import { filterNavChildren, filterNavItems, filterNavLinks, hasNavFilterResults, shouldClearNavFilter, shouldOpenNavSection } from './filter.js';
 
 	interface Props {
 		items: NavItem[];
@@ -141,13 +142,7 @@
 	const flatItems = $derived(flatten(items));
 	const favItems = $derived(flatItems.filter(i => favorites.has(i.id) && (!filterText || i.label.toLowerCase().includes(filterText.toLowerCase()))));
 
-	function filterList(list: NavItem[]): NavItem[] {
-		if (!filterText) return list;
-		const q = filterText.toLowerCase();
-		return list.filter(i => i.label.toLowerCase().includes(q));
-	}
-
-	const topLevel = $derived(filterList(items));
+	const topLevel = $derived(filterNavItems(items, filterText));
 	const recentItems = $derived(
 		recentRoutes
 			.map(href => flatItems.find(i => i.href === href))
@@ -165,13 +160,24 @@
 			: []
 	);
 
+	const filteredNavLinks = $derived(filterNavLinks(items, filterText, favorites));
 	const allVisible = $derived([
-		...favItems,
-		...topLevel.filter(i => !favorites.has(i.id) && !i.children),
-		...topLevel.filter(i => !favorites.has(i.id) && i.children && openSections.has(i.id)),
+		...(filterText.trim()
+			? [...favItems, ...filteredNavLinks]
+			: [
+					...favItems,
+					...topLevel.filter(i => !favorites.has(i.id) && !i.children),
+					...topLevel.filter(i => !favorites.has(i.id) && i.children && openSections.has(i.id)),
+			  ]),
 	]);
 
 	function handleKeydown(e: KeyboardEvent) {
+		if (shouldClearNavFilter(e.key, filterText)) {
+			e.preventDefault();
+			filterText = '';
+			focusedIndex = -1;
+			return;
+		}
 		const len = allVisible.length;
 		if (len === 0) return;
 		if (e.key === 'ArrowDown') { e.preventDefault(); focusedIndex = Math.min(focusedIndex + 1, len - 1); focusItem(focusedIndex); }
@@ -228,12 +234,15 @@
 
 <div class="worn-sidebar" class:is-collapsed={collapsed} data-radius={rounded}>
 <div class="worn-sidebar-filter">
-	<input type="search" class="worn-filter-input" placeholder="Filter…" bind:value={filterText} onkeydown={handleKeydown} />
+	<input type="search" class="worn-filter-input" placeholder="Filter…" aria-label="Filter navigation" bind:value={filterText} onkeydown={handleKeydown} />
 	{#if filterText}<button type="button" class="worn-filter-clear" onclick={() => filterText = ''} aria-label="Clear filter">×</button>{/if}
 </div>
 
 <nav class="worn-nav" bind:this={navEl}>
 	<div class="worn-active-indicator"></div>
+	{#if filterText.trim() && !hasNavFilterResults(items, filterText)}
+		<div class="worn-filter-empty" role="status">No matches</div>
+	{/if}
 
 	{#if recentItems.length > 0 && !filterText}
 		<div class="worn-section-label">Recent</div>
@@ -261,9 +270,9 @@
 
 	{#each topLevel.filter(i => !favorites.has(i.id)) as item (item.id)}
 		{#if item.children}
-			<details class="worn-nav-group" open={openSections.has(item.id)} ontoggle={(e) => toggleSection(item.id, (e.currentTarget as HTMLDetailsElement).open)}>
+			<details class="worn-nav-group" open={shouldOpenNavSection(item, filterText, openSections)} ontoggle={(e) => toggleSection(item.id, (e.currentTarget as HTMLDetailsElement).open)}>
 				<summary class="worn-nav-item worn-nav-summary" class:active={sectionForActiveHref(items, activeHref)?.id === item.id}><span class="worn-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></span><span class="worn-nav-label">{item.label}</span></summary>
-				{#each filterList(item.children).filter(c => !favorites.has(c.id)) as child (child.id)}
+				{#each filterNavChildren(item, filterText).filter(c => !favorites.has(c.id)) as child (child.id)}
 					{@render navLink(child)}
 				{/each}
 			</details>
@@ -301,6 +310,12 @@
 		background: none; border: 0;
 		color: var(--worn-sidebar-text-muted, var(--cockpit-text-muted, #666));
 		cursor: pointer; font-size: 16px; padding: 2px 6px; line-height: 1;
+	}
+	.worn-filter-empty {
+		padding: 12px;
+		color: var(--worn-sidebar-text-muted, var(--cockpit-text-muted, #666));
+		font-size: 12px;
+		text-align: center;
 	}
 
 	.worn-nav { position: relative; }

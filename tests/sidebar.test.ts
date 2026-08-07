@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'bun:test';
+import { filterNavChildren, filterNavItems, filterNavLinks, hasNavFilterResults, shouldClearNavFilter, shouldOpenNavSection } from '../src/filter.js';
 
 function flatten(items: { id: string; children?: any[] }[]): { id: string }[] {
   const result: { id: string }[] = [];
@@ -7,12 +8,6 @@ function flatten(items: { id: string; children?: any[] }[]): { id: string }[] {
     if (item.children) result.push(...flatten(item.children));
   }
   return result;
-}
-
-function filterItems(items: { label: string }[], query: string) {
-  if (!query) return items;
-  const q = query.toLowerCase();
-  return items.filter(i => i.label.toLowerCase().includes(q));
 }
 
 describe('flatten', () => {
@@ -31,24 +26,100 @@ describe('flatten', () => {
   });
 });
 
-describe('filterItems', () => {
-  const items = [{ label: 'Home' }, { label: 'Dashboard' }, { label: 'Settings' }];
+describe('filterNavItems', () => {
+	const items = [
+		{ id: 'today', label: 'Today', children: [{ id: 'home', label: 'Home' }, { id: 'review', label: 'Review' }] },
+		{ id: 'settings', label: 'Settings' },
+	];
 
-  test('empty query returns all', () => {
-    expect(filterItems(items, '')).toEqual(items);
-  });
+	test('empty query returns all', () => {
+		expect(filterNavItems(items, '')).toEqual(items);
+	});
 
-  test('matches substring', () => {
-    expect(filterItems(items, 'da')).toEqual([{ label: 'Dashboard' }]);
-  });
+	test('keeps a section when a child matches', () => {
+		expect(filterNavItems(items, 'h').map((item) => item.id)).toEqual(['today']);
+	});
 
-  test('case insensitive', () => {
-    expect(filterItems(items, 'SETTINGS')).toEqual([{ label: 'Settings' }]);
-  });
+	test('case insensitive', () => {
+		expect(filterNavItems(items, 'SETTINGS').map((item) => item.id)).toEqual(['settings']);
+	});
 
-  test('no match returns empty', () => {
-    expect(filterItems(items, 'zzz')).toEqual([]);
-  });
+	test('no match returns empty', () => {
+		expect(filterNavItems(items, 'zzz')).toEqual([]);
+	});
+});
+
+describe('hasNavFilterResults', () => {
+	test('treats an empty or whitespace query as the normal navigation state', () => {
+		expect(hasNavFilterResults([], '')).toBe(true);
+		expect(hasNavFilterResults([], '   ')).toBe(true);
+	});
+
+	test('reports a matching child as a result', () => {
+		expect(hasNavFilterResults([{ id: 'today', label: 'Today', children: [{ id: 'home', label: 'Home' }] }], 'h')).toBe(true);
+	});
+
+	test('reports no result for an unmatched query', () => {
+		expect(hasNavFilterResults([{ id: 'today', label: 'Today' }], 'zzz')).toBe(false);
+	});
+});
+
+describe('filterNavLinks', () => {
+	const items = [
+		{ id: 'today', label: 'Today', children: [{ id: 'home', label: 'Home' }, { id: 'review', label: 'Review' }] },
+		{ id: 'settings', label: 'Settings' },
+	];
+
+	test('returns the matching child link instead of its section header', () => {
+		expect(filterNavLinks(items, 'h').map((item) => item.id)).toEqual(['home']);
+	});
+
+	test('keeps direct top-level links selectable', () => {
+		expect(filterNavLinks(items, 'set').map((item) => item.id)).toEqual(['settings']);
+	});
+
+	test('does not duplicate favorite links in the filtered navigation list', () => {
+		expect(filterNavLinks(items, 'h', new Set(['home'])).map((item) => item.id)).toEqual([]);
+	});
+});
+
+describe('shouldClearNavFilter', () => {
+	test('clears Escape when the filter has text', () => {
+		expect(shouldClearNavFilter('Escape', 'home')).toBe(true);
+	});
+
+	test('does not intercept other keys or an empty filter', () => {
+		expect(shouldClearNavFilter('Escape', '')).toBe(false);
+		expect(shouldClearNavFilter('Enter', 'home')).toBe(false);
+	});
+});
+
+describe('filterNavChildren', () => {
+	const section = { id: 'today', label: 'Today', children: [{ id: 'home', label: 'Home' }, { id: 'review', label: 'Review' }] };
+
+	test('returns the matching child', () => {
+		expect(filterNavChildren(section, 'h').map((item) => item.id)).toEqual(['home']);
+	});
+
+	test('returns all children when the section matches', () => {
+		expect(filterNavChildren(section, 'today').map((item) => item.id)).toEqual(['home', 'review']);
+	});
+});
+
+describe('shouldOpenNavSection', () => {
+	const section = { id: 'today', label: 'Today', children: [{ id: 'home', label: 'Home' }, { id: 'review', label: 'Review' }] };
+
+	test('opens a closed section when a child matches', () => {
+		expect(shouldOpenNavSection({ ...section }, 'h', new Set())).toBe(true);
+	});
+
+	test('keeps an unrelated closed section closed', () => {
+		expect(shouldOpenNavSection({ ...section }, 'zzz', new Set())).toBe(false);
+	});
+
+	test('preserves an explicitly open section without a filter', () => {
+		expect(shouldOpenNavSection({ ...section }, '', new Set(['today']))).toBe(true);
+	});
 });
 
 
