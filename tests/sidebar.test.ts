@@ -50,3 +50,53 @@ describe('filterItems', () => {
     expect(filterItems(items, 'zzz')).toEqual([]);
   });
 });
+
+
+import { sectionForActiveHref, sectionIds, initialOpenSections } from '../src/sections.js';
+import type { NavItem } from '../src/types.js';
+
+const NAV: NavItem[] = [
+  { id: 'today', label: 'Today', children: [{ id: 'home', href: '/', label: 'Home' }, { id: 'review', href: '/review', label: 'Review' }] },
+  { id: 'agents', label: 'Agents', children: [{ id: 'team', href: '/team', label: 'Team' }] },
+  { id: 'analyze', label: 'Analyze', children: [{ id: 'insights', href: '/insights', label: 'Insights' }, { id: 'search', href: '/search', label: 'Search' }] },
+  { id: 'settings', href: '/settings', label: 'Settings' },
+];
+
+describe('sectionIds', () => {
+  test('lists only items with children', () => {
+    expect(sectionIds(NAV)).toEqual(['today', 'agents', 'analyze']);
+  });
+});
+
+describe('sectionForActiveHref', () => {
+  test('finds the section holding the active page', () => {
+    expect(sectionForActiveHref(NAV, '/insights')?.id).toBe('analyze');
+  });
+
+  test('returns null for a top-level page', () => {
+    expect(sectionForActiveHref(NAV, '/settings')).toBeNull();
+  });
+
+  test('returns null for an unknown href', () => {
+    expect(sectionForActiveHref(NAV, '/missing')).toBeNull();
+  });
+
+  test('returns null for an empty href', () => {
+    expect(sectionForActiveHref(NAV, '')).toBeNull();
+  });
+});
+
+describe('initialOpenSections', () => {
+  test('every section open by default', () => {
+    expect([...initialOpenSections(NAV, null)]).toEqual(['today', 'agents', 'analyze']);
+  });
+
+  test('persisted state is authoritative (user closed sections stay closed)', () => {
+    expect([...initialOpenSections(NAV, ['analyze'])]).toEqual(['analyze']);
+    expect([...initialOpenSections(NAV, ['today', 'agents'])]).toEqual(['today', 'agents']);
+  });
+
+  test('empty persisted list stays closed for all sections', () => {
+    expect([...initialOpenSections(NAV, [])]).toEqual([]);
+  });
+});

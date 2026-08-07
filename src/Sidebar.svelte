@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { NavItem } from './types.js';
+	import { sectionForActiveHref, initialOpenSections } from './sections.js';
 
 	interface Props {
 		items: NavItem[];
@@ -12,12 +13,42 @@
 
 	let { items, activeHref = '', collapsed = $bindable(false), rounded = 'md', onnavigate, oncollapsed }: Props = $props();
 
-	let moreOpen = $state(true);
+	// Per-group open state — a Set of section ids, NOT one shared boolean.
+	// Previously every <details> bound to the same `moreOpen`, so toggling
+	// any section title flipped ALL sections open/closed together.
 	let filterText = $state('');
 	let focusedIndex = $state(-1);
 	let favorites = $state<Set<string>>(new Set());
 	let recentRoutes = $state<string[]>([]);
 	let contextMenu = $state<string | null>(null);
+
+	// Sections default open; persisted per-section state (wornpage-sidebar-
+	// open-sections) is honored, with any NEW section defaulting open; the
+	// group holding the active item is forced open so the current page is
+	// never hidden inside a collapsed section.
+	let openSections = $state<Set<string>>(new Set());
+	$effect(() => {
+		try {
+			const raw = localStorage.getItem('wornpage-sidebar-open-sections');
+			const stored = raw ? (JSON.parse(raw) as string[]) : null;
+			openSections = initialOpenSections(items, stored);
+		} catch {
+			openSections = new Set(items.filter((i) => i.children).map((i) => i.id));
+		}
+	});
+	$effect(() => {
+		if (!activeHref) return;
+		const parent = sectionForActiveHref(items, activeHref);
+		if (parent) openSections = new Set(openSections).add(parent.id);
+	});
+	function toggleSection(id: string, open: boolean) {
+		const next = new Set(openSections);
+		if (open) next.add(id); else next.delete(id);
+		openSections = next;
+	}
+	$effect(() => {
+		try { localStorage.setItem('wornpage-sidebar-open-sections', JSON.stringify([...openSections])); } catch {}
+	});
 
 	$effect(() => {
 		const path = activeHref;
@@ -39,8 +70,15 @@
 			if (r) recentRoutes = JSON.parse(r);
 		} catch {}
 		try {
+			// Migrate the legacy single "more-open" flag: '0' meant every
+			// section was collapsed. New per-section state lives under
+			// wornpage-sidebar-open-sections (read above); only apply the old
+			// flag when the new key was never written.
 			const v = localStorage.getItem('wornpage-sidebar-more-open');
-			if (v === '0') moreOpen = false;
+			const hasNew = localStorage.getItem('wornpage-sidebar-open-sections') !== null;
+			if (v === '0' && !hasNew) {
+				openSections = new Set();
+			}
 		} catch {}
 	});
 
@@ -124,7 +162,7 @@
 	const allVisible = $derived([
 		...favItems,
 		...topLevel.filter(i => !favorites.has(i.id) && !i.children),
-		...(moreOpen ? topLevel.filter(i => !favorites.has(i.id) && i.children) : []),
+		...topLevel.filter(i => !favorites.has(i.id) && i.children && openSections.has(i.id)),
 	]);
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -217,8 +255,8 @@
 
 	{#each topLevel.filter(i => !favorites.has(i.id)) as item (item.id)}
 		{#if item.children}
-			<details class="worn-nav-group" bind:open={moreOpen}>
-				<summary class="worn-nav-item worn-nav-summary"><span class="worn-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></span><span class="worn-nav-label">{item.label}</span></summary>
+			<details class="worn-nav-group" open={openSections.has(item.id)} ontoggle={(e) => toggleSection(item.id, (e.currentTarget as HTMLDetailsElement).open)}>
+				<summary class="worn-nav-item worn-nav-summary" class:active={sectionForActiveHref(items, activeHref)?.id === item.id}><span class="worn-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></span><span class="worn-nav-label">{item.label}</span></summary>
 				{#each filterList(item.children).filter(c => !favorites.has(c.id)) as child (child.id)}
 					{@render navLink(child)}
 				{/each}
@@ -306,9 +344,27 @@
 	}
 	.worn-section-divider { height: 1px; background: var(--worn-sidebar-border, var(--cockpit-border, #ddd)); margin: 4px 8px; }
 
-	.worn-nav-summary { font-weight: 600; }
+	.worn-nav-summary {
+		font-weight: 600;
+		/* The summary is the SECTION TITLE, not a child row: it stays flush
+		   with the base 12px padding instead of inheriting the child indent.
+		   (Previously .worn-nav-group > .worn-nav-item set 24px on BOTH the
+		   summary and its children, so section titles sat at the same indent
+		   as the rows inside them.) */
+		padding-left: 12px;
+	}
 	.worn-nav-group { border-top: 1px solid var(--worn-sidebar-border, var(--cockpit-border, #ddd)); margin-top: 4px; padding-top: 4px; }
-	.worn-nav-group > .worn-nav-item { padding-left: 24px; }
+	.worn-nav-group > .worn-nav-item:not(.worn-nav-summary) { padding-left: 24px; }
+
+	/* Section title selected state: the summary highlights when the group is
+	   open (the arrow row the user clicked) or holds the active page. The
+	   chevron rotates to point at the expanded children. */
+	.worn-nav-group > .worn-nav-summary.active {
+		background: var(--worn-sidebar-hover, var(--cockpit-hover-bg, rgba(0,0,0,0.05)));
+		color: var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));
+	}
+	.worn-nav-group > .worn-nav-summary .worn-nav-icon { transition: transform 0.18s var(--worn-ease, ease); }
+	.worn-nav-group[open] > .worn-nav-summary .worn-nav-icon { transform: rotate(90deg); }
 
 	.worn-active-indicator {
 		position: absolute; left: 2px; width: calc(100% - 4px);
