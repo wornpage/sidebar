@@ -2323,19 +2323,24 @@ function ci(e, t) {
 function li(e, t) {
 	return Array.isArray(t) ? new Set(t) : new Set(si(e));
 }
+function ui(e, t, n) {
+	if (!t) return null;
+	let r = ci(e, t);
+	return !r || n.has(r.id) ? null : r;
+}
 //#endregion
 //#region src/Sidebar.svelte
-var ui = /* @__PURE__ */ Z("<span class=\"worn-nav-icon svelte-1hv280f\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" class=\"svelte-1hv280f\"></svg></span>"), di = /* @__PURE__ */ Z("<span> </span>"), fi = /* @__PURE__ */ Z("<button type=\"button\" class=\"worn-reorder-btn svelte-1hv280f\" title=\"Move up\">▲</button>"), pi = /* @__PURE__ */ Z("<button type=\"button\" class=\"worn-reorder-btn svelte-1hv280f\" title=\"Move down\">▼</button>"), mi = /* @__PURE__ */ Z("<span class=\"worn-nav-reorder\"><!> <!></span>"), hi = /* @__PURE__ */ Z("<a><!> <span class=\"worn-nav-label svelte-1hv280f\"> </span> <!> <!></a>"), gi = /* @__PURE__ */ Z("<button type=\"button\" class=\"worn-filter-clear svelte-1hv280f\" aria-label=\"Clear filter\">×</button>"), _i = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">Recent</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), vi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">Needs attention</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), yi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">You might want</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), bi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">Pinned</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), xi = /* @__PURE__ */ Z("<details class=\"worn-nav-group svelte-1hv280f\"><summary><span class=\"worn-nav-icon svelte-1hv280f\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" class=\"svelte-1hv280f\"><polyline points=\"9 18 15 12 9 6\"></polyline></svg></span><span class=\"worn-nav-label svelte-1hv280f\"> </span></summary> <!></details>"), Si = /* @__PURE__ */ Z("<div class=\"worn-menu-backdrop svelte-1hv280f\"></div> <div class=\"worn-context-menu svelte-1hv280f\"><button type=\"button\" class=\"svelte-1hv280f\"> </button> <button type=\"button\" class=\"svelte-1hv280f\">👁 Hide</button> <button type=\"button\" class=\"svelte-1hv280f\">🔄 Reset all</button></div>", 1), Ci = /* @__PURE__ */ Z("<div><div class=\"worn-sidebar-filter svelte-1hv280f\"><input type=\"search\" class=\"worn-filter-input svelte-1hv280f\" placeholder=\"Filter…\"/> <!></div> <nav class=\"worn-nav svelte-1hv280f\"><div class=\"worn-active-indicator svelte-1hv280f\"></div> <!> <!> <!> <!> <!></nav> <!></div>"), wi = {
+var di = /* @__PURE__ */ Z("<span class=\"worn-nav-icon svelte-1hv280f\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" class=\"svelte-1hv280f\"></svg></span>"), fi = /* @__PURE__ */ Z("<span> </span>"), pi = /* @__PURE__ */ Z("<button type=\"button\" class=\"worn-reorder-btn svelte-1hv280f\" title=\"Move up\">▲</button>"), mi = /* @__PURE__ */ Z("<button type=\"button\" class=\"worn-reorder-btn svelte-1hv280f\" title=\"Move down\">▼</button>"), hi = /* @__PURE__ */ Z("<span class=\"worn-nav-reorder\"><!> <!></span>"), gi = /* @__PURE__ */ Z("<a><!> <span class=\"worn-nav-label svelte-1hv280f\"> </span> <!> <!></a>"), _i = /* @__PURE__ */ Z("<button type=\"button\" class=\"worn-filter-clear svelte-1hv280f\" aria-label=\"Clear filter\">×</button>"), vi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">Recent</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), yi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">Needs attention</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), bi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">You might want</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), xi = /* @__PURE__ */ Z("<div class=\"worn-section-label svelte-1hv280f\">Pinned</div> <!> <div class=\"worn-section-divider svelte-1hv280f\"></div>", 1), Si = /* @__PURE__ */ Z("<details class=\"worn-nav-group svelte-1hv280f\"><summary><span class=\"worn-nav-icon svelte-1hv280f\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" class=\"svelte-1hv280f\"><polyline points=\"9 18 15 12 9 6\"></polyline></svg></span><span class=\"worn-nav-label svelte-1hv280f\"> </span></summary> <!></details>"), Ci = /* @__PURE__ */ Z("<div class=\"worn-menu-backdrop svelte-1hv280f\"></div> <div class=\"worn-context-menu svelte-1hv280f\"><button type=\"button\" class=\"svelte-1hv280f\"> </button> <button type=\"button\" class=\"svelte-1hv280f\">👁 Hide</button> <button type=\"button\" class=\"svelte-1hv280f\">🔄 Reset all</button></div>", 1), wi = /* @__PURE__ */ Z("<div><div class=\"worn-sidebar-filter svelte-1hv280f\"><input type=\"search\" class=\"worn-filter-input svelte-1hv280f\" placeholder=\"Filter…\"/> <!></div> <nav class=\"worn-nav svelte-1hv280f\"><div class=\"worn-active-indicator svelte-1hv280f\"></div> <!> <!> <!> <!> <!></nav> <!></div>"), Ti = {
 	hash: "svelte-1hv280f",
 	code: ".worn-sidebar-filter.svelte-1hv280f {position:relative;margin:4px 8px 8px;}.worn-filter-input.svelte-1hv280f {width:100%;padding:6px 28px 6px 10px;border:1px solid var(--worn-sidebar-border, var(--cockpit-border, #ddd));border-radius:6px;background:var(--worn-sidebar-bg, var(--cockpit-bg, #f5f5f5));color:var(--worn-sidebar-text, var(--cockpit-text, #000));font:inherit;font-size:12px;box-sizing:border-box;}.worn-filter-input.svelte-1hv280f:focus {outline:2px dashed var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));outline-offset:-2px;}.worn-filter-clear.svelte-1hv280f {position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--worn-sidebar-text-muted, var(--cockpit-text-muted, #666));cursor:pointer;font-size:16px;padding:2px 6px;line-height:1;}.worn-nav.svelte-1hv280f {position:relative;}.worn-nav-item.svelte-1hv280f {display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--worn-nav-radius, 8px);color:var(--worn-sidebar-text, var(--cockpit-text, #000));text-decoration:none;font-size:13px;position:relative;cursor:pointer;min-height:36px;}.worn-nav-item.svelte-1hv280f:hover {background:var(--worn-sidebar-hover, var(--cockpit-hover-bg, rgba(0,0,0,0.05)));}.worn-nav-item.active.svelte-1hv280f {background:var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));color:var(--worn-sidebar-accent-text, var(--cockpit-accent-text, #fff));anchor-name:--worn-active-item;}.worn-nav-item.is-context-anchor.svelte-1hv280f {anchor-name:--worn-ctx;}.worn-sidebar[data-radius=\"sm\"].svelte-1hv280f {--worn-nav-radius: 4px;}.worn-sidebar[data-radius=\"md\"].svelte-1hv280f {--worn-nav-radius: 8px;}.worn-sidebar[data-radius=\"lg\"].svelte-1hv280f {--worn-nav-radius: 12px;}.worn-sidebar[data-radius=\"pill\"].svelte-1hv280f {--worn-nav-radius: 999px;}.worn-nav-icon.svelte-1hv280f {flex-shrink:0;display:flex;}.worn-nav-icon.svelte-1hv280f svg:where(.svelte-1hv280f) {display:block;}.worn-nav-label.svelte-1hv280f {flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.worn-nav-badge.svelte-1hv280f {display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 5px;border-radius:8px;background:var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));color:var(--worn-sidebar-accent-text, var(--cockpit-accent-text, #fff));font-size:9px;font-weight:700;line-height:16px;text-align:center;}.worn-nav-badge.is-danger.svelte-1hv280f {background:var(--worn-sidebar-danger, var(--cockpit-danger-text, #e74c3c));color:#fff;}.worn-nav-badge.is-warning.svelte-1hv280f {background:var(--worn-sidebar-warning, var(--cockpit-warning-text, #d97706));color:#fff;}.worn-section-label.svelte-1hv280f {font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--worn-sidebar-text-muted, var(--cockpit-text-muted, #666));padding:4px 12px 2px;}.worn-section-divider.svelte-1hv280f {height:1px;background:var(--worn-sidebar-border, var(--cockpit-border, #ddd));margin:4px 8px;}.worn-nav-summary.svelte-1hv280f {font-weight:600;\r\n		/* The summary is the SECTION TITLE, not a child row: it stays flush\r\n		   with the base 12px padding instead of inheriting the child indent.\r\n		   (Previously .worn-nav-group > .worn-nav-item set 24px on BOTH the\r\n		   summary and its children, so section titles sat at the same indent\r\n		   as the rows inside them.) */padding-left:12px;}.worn-nav-group.svelte-1hv280f {border-top:1px solid var(--worn-sidebar-border, var(--cockpit-border, #ddd));margin-top:4px;padding-top:4px;}.worn-nav-group.svelte-1hv280f > .worn-nav-item:where(.svelte-1hv280f):not(.worn-nav-summary) {padding-left:24px;}\r\n\r\n	/* Section title selected state: the summary highlights when the group is\r\n	   open (the arrow row the user clicked) or holds the active page. The\r\n	   chevron rotates to point at the expanded children. */.worn-nav-group.svelte-1hv280f > .worn-nav-summary.active:where(.svelte-1hv280f) {background:var(--worn-sidebar-hover, var(--cockpit-hover-bg, rgba(0,0,0,0.05)));color:var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));}.worn-nav-group.svelte-1hv280f > .worn-nav-summary:where(.svelte-1hv280f) .worn-nav-icon:where(.svelte-1hv280f) {transition:transform 0.18s var(--worn-ease, ease);}.worn-nav-group[open].svelte-1hv280f > .worn-nav-summary:where(.svelte-1hv280f) .worn-nav-icon:where(.svelte-1hv280f) {transform:rotate(90deg);}.worn-active-indicator.svelte-1hv280f {position:absolute;left:2px;width:calc(100% - 4px);position-anchor:--worn-active-item;top:anchor(--worn-active-item top);height:anchor(--worn-active-item height);background:var(--worn-sidebar-accent, var(--cockpit-accent, #0d9488));border-radius:999px;transition:opacity 0.15s ease;pointer-events:none;z-index:0;opacity:0;}.worn-sidebar.svelte-1hv280f:not(.is-collapsed) .worn-nav:where(.svelte-1hv280f):has(.worn-nav-item.active:where(.svelte-1hv280f)) .worn-active-indicator:where(.svelte-1hv280f) {opacity:0.15;}.worn-reorder-btn.svelte-1hv280f {background:none;border:0;color:var(--worn-sidebar-text-muted, var(--cockpit-text-muted, #666));cursor:pointer;font-size:8px;padding:2px;opacity:0;transition:opacity 0.15s;min-height:unset;line-height:1;}.worn-nav-item.svelte-1hv280f:hover .worn-reorder-btn:where(.svelte-1hv280f) {opacity:0.7;}.worn-nav-item.svelte-1hv280f:hover .worn-reorder-btn:where(.svelte-1hv280f):hover {opacity:1;}.worn-menu-backdrop.svelte-1hv280f {position:fixed;inset:0;z-index:100;}.worn-context-menu.svelte-1hv280f {position:fixed;z-index:101;position-anchor:--worn-ctx;left:anchor(right);top:anchor(bottom);background:var(--worn-sidebar-surface, var(--cockpit-surface, #fff));border:1px solid var(--worn-sidebar-border, var(--cockpit-border, #ddd));border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:140px;overflow:hidden;transform:translate(4px, 4px);}.worn-context-menu.svelte-1hv280f button:where(.svelte-1hv280f) {display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border:0;background:transparent;color:var(--worn-sidebar-text, var(--cockpit-text, #000));font:inherit;font-size:12px;cursor:pointer;text-align:left;min-height:36px;}.worn-context-menu.svelte-1hv280f button:where(.svelte-1hv280f):hover {background:var(--worn-sidebar-hover, var(--cockpit-hover-bg, rgba(0,0,0,0.05)));}"
 };
-function Ti(e, t) {
-	Ge(t, !0), Lr(e, wi);
+function Ei(e, t) {
+	Ge(t, !0), Lr(e, Ti);
 	let n = (e, t = _) => {
-		var n = hi();
+		var n = gi();
 		let r;
 		var i = z(n), a = (e) => {
-			var n = ui(), r = z(n);
+			var n = di(), r = z(n);
 			Ir(r, () => t().icon, !0), D(r), D(n), Q(e, n);
 		};
 		$(i, (e) => {
@@ -2344,7 +2349,7 @@ function Ti(e, t) {
 		var o = B(i, 2), s = z(o, !0);
 		D(o);
 		var l = B(o, 2), d = (e) => {
-			var n = di();
+			var n = fi();
 			let r;
 			var i = z(n, !0);
 			D(n), Sn(() => {
@@ -2358,8 +2363,8 @@ function Ti(e, t) {
 			t().badge !== void 0 && t().badge > 0 && e(d);
 		});
 		var f = B(l, 2), p = (e) => {
-			var n = mi(), r = z(n), i = (e) => {
-				var n = fi();
+			var n = hi(), r = z(n), i = (e) => {
+				var n = pi();
 				cr("click", n, (e) => {
 					e.stopPropagation(), e.preventDefault(), h(t().id, -1);
 				}), Q(e, n);
@@ -2368,7 +2373,7 @@ function Ti(e, t) {
 				X(a) && e(i);
 			});
 			var o = B(r, 2), s = (e) => {
-				var n = pi();
+				var n = mi();
 				cr("click", n, (e) => {
 					e.stopPropagation(), e.preventDefault(), h(t().id, 1);
 				}), Q(e, n);
@@ -2394,8 +2399,7 @@ function Ti(e, t) {
 			F(d, new Set(t.items.filter((e) => e.children).map((e) => e.id)), !0);
 		}
 	}), hn(() => {
-		if (!r()) return;
-		let e = ci(t.items, r());
+		let e = ui(t.items, r(), X(d));
 		e && F(d, new Set(X(d)).add(e.id), !0);
 	});
 	function f(e, t) {
@@ -2501,19 +2505,19 @@ function Ti(e, t) {
 		return e.href ? r() === e.href : !1;
 	}
 	let ue = /* @__PURE__ */ P(void 0);
-	var de = Ci();
+	var de = wi();
 	let fe;
 	var pe = z(de), me = z(pe);
 	Wr(me);
 	var he = B(me, 2), ge = (e) => {
-		var t = gi();
+		var t = _i();
 		cr("click", t, () => F(o, "")), Q(e, t);
 	};
 	$(he, (e) => {
 		X(o) && e(ge);
 	}), D(pe);
 	var _e = B(pe, 2), ve = B(z(_e), 2), ye = (e) => {
-		var t = _i();
+		var t = vi();
 		Ar(B(an(t), 2), 17, () => X(ne).slice(0, 3), (e) => e.id, (e, t) => {
 			n(e, () => X(t));
 		}), Re(2), Q(e, t);
@@ -2522,7 +2526,7 @@ function Ti(e, t) {
 		X(ne).length > 0 && !X(o) && e(ye);
 	});
 	var be = B(ve, 2), xe = (e) => {
-		var t = vi();
+		var t = yi();
 		Ar(B(an(t), 2), 17, () => X(re).slice(0, 3), (e) => e.id, (e, t) => {
 			n(e, () => X(t));
 		}), Re(2), Q(e, t);
@@ -2531,7 +2535,7 @@ function Ti(e, t) {
 		X(re).length > 0 && !X(o) && e(xe);
 	});
 	var Se = B(be, 2), Ce = (e) => {
-		var t = yi();
+		var t = bi();
 		Ar(B(an(t), 2), 17, () => X(ie).slice(0, 3), (e) => e.id, (e, t) => {
 			n(e, () => X(t));
 		}), Re(2), Q(e, t);
@@ -2540,7 +2544,7 @@ function Ti(e, t) {
 		X(ie).length > 0 && !X(o) && e(Ce);
 	});
 	var we = B(Se, 2), Te = (e) => {
-		var t = bi();
+		var t = xi();
 		Ar(B(an(t), 2), 17, () => X(C), (e) => e.id, (e, t) => {
 			n(e, () => X(t));
 		}), Re(2), Q(e, t);
@@ -2549,7 +2553,7 @@ function Ti(e, t) {
 		X(C).length > 0 && e(Te);
 	}), Ar(B(we, 2), 17, () => X(te).filter((e) => !X(c).has(e.id)), (e) => e.id, (e, i) => {
 		var a = gr(), o = an(a), s = (e) => {
-			var a = xi(), o = z(a);
+			var a = Si(), o = z(a);
 			let s;
 			var l = B(z(o)), u = z(l, !0);
 			D(l), D(o), Ar(B(o, 2), 17, () => ee(X(i).children).filter((e) => !X(c).has(e.id)), (e) => e.id, (e, t) => {
@@ -2565,7 +2569,7 @@ function Ti(e, t) {
 		}), Q(e, a);
 	}), D(_e), $r(_e, (e) => F(ue, e), () => X(ue));
 	var Ee = B(_e, 2), De = (e) => {
-		var t = Si(), n = an(t), r = B(n, 2), i = z(r), a = z(i, !0);
+		var t = Ci(), n = an(t), r = B(n, 2), i = z(r), a = z(i, !0);
 		D(i);
 		var o = B(i, 2), s = B(o, 2);
 		D(r), Sn((e) => yr(a, e), [() => X(c).has(X(u)) ? "📌 Unpin" : "📌 Pin"]), cr("click", n, v), cr("click", i, () => {
@@ -2585,12 +2589,12 @@ lr([
 ]);
 //#endregion
 //#region src/SidebarElement.svelte
-var Ei = /* @__PURE__ */ Z("<div class=\"worn-sidebar-element svelte-1i49h1f\"><!></div>"), Di = {
+var Di = /* @__PURE__ */ Z("<div class=\"worn-sidebar-element svelte-1i49h1f\"><!></div>"), Oi = {
 	hash: "svelte-1i49h1f",
 	code: ".worn-sidebar-element.svelte-1i49h1f {height:100%;}"
 };
-function Oi(e, t) {
-	Ge(t, !0), Lr(e, Di);
+function ki(e, t) {
+	Ge(t, !0), Lr(e, Oi);
 	let n = ei(t, "items", 23, () => []), r = ei(t, "activehref", 7, ""), i = ei(t, "collapsed", 7, !1), a = ei(t, "rounded", 7, "md"), o;
 	function s(e, t) {
 		o?.dispatchEvent(new CustomEvent(e, {
@@ -2623,8 +2627,8 @@ function Oi(e, t) {
 		set rounded(e = "md") {
 			a(e), It();
 		}
-	}, l = Ei();
-	return Ti(z(l), {
+	}, l = Di();
+	return Ei(z(l), {
 		get items() {
 			return n();
 		},
@@ -2644,11 +2648,11 @@ function Oi(e, t) {
 		}
 	}), D(l), $r(l, (e) => o = e, () => o), Q(e, l), Ke(c);
 }
-customElements.define("worn-sidebar", oi(Oi, {
+customElements.define("worn-sidebar", oi(ki, {
 	items: { type: "Array" },
 	activehref: {},
 	collapsed: { type: "Boolean" },
 	rounded: {}
 }, [], []));
 //#endregion
-export { Oi as default };
+export { ki as default };

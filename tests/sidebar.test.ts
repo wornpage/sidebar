@@ -100,3 +100,24 @@ describe('initialOpenSections', () => {
     expect([...initialOpenSections(NAV, [])]).toEqual([]);
   });
 });
+
+
+import { activeSectionToForceOpen } from '../src/sections.js';
+
+describe('activeSectionToForceOpen', () => {
+  test('returns the section holding the active page when it is closed', () => {
+    expect(activeSectionToForceOpen(NAV, '/insights', new Set(['today']))?.id).toBe('analyze');
+  });
+
+  test('returns null when the section is already open (no write → no loop)', () => {
+    expect(activeSectionToForceOpen(NAV, '/insights', new Set(['today', 'agents', 'analyze']))).toBeNull();
+  });
+
+  test('returns null for a top-level page', () => {
+    expect(activeSectionToForceOpen(NAV, '/settings', new Set())).toBeNull();
+  });
+
+  test('returns null for an empty href', () => {
+    expect(activeSectionToForceOpen(NAV, '', new Set())).toBeNull();
+  });
+});

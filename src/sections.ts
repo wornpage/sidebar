@@ -38,3 +38,15 @@ export function initialOpenSections(items: NavItem[], persisted: string[] | null
   }
   return new Set(persisted);
 }
+
+// The section that must be forced open because it holds the active page, or
+// null. Pure decision helper for the sidebar's active-section effect — the
+// effect must only WRITE when this returns a section that is NOT already in
+// the open set, or the write re-triggers the effect (a fresh Set on every
+// run loops until Svelte throws effect_update_depth_exceeded).
+export function activeSectionToForceOpen(items: NavItem[], activeHref: string, open: Set<string>): NavItem | null {
+  if (!activeHref) return null;
+  const parent = sectionForActiveHref(items, activeHref);
+  if (!parent || open.has(parent.id)) return null;
+  return parent;
+}

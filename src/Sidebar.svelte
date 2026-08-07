@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { NavItem } from './types.js';
-	import { sectionForActiveHref, initialOpenSections } from './sections.js';
+	import { sectionForActiveHref, activeSectionToForceOpen, initialOpenSections } from './sections.js';
 
 	interface Props {
 		items: NavItem[];
@@ -37,9 +37,15 @@
 		}
 	});
 	$effect(() => {
-		if (!activeHref) return;
-		const parent = sectionForActiveHref(items, activeHref);
-		if (parent) openSections = new Set(openSections).add(parent.id);
+		// Force the active item's section open — but only when it is NOT
+		// already open. Writing a fresh Set unconditionally here made this
+		// effect depend on its own write (new Set !== old Set → re-run → write
+		// again), which looped until Svelte threw effect_update_depth_exceeded
+		// and the whole sidebar (and every WornReveal on the page) crashed.
+		const parent = activeSectionToForceOpen(items, activeHref, openSections);
+		if (parent) {
+			openSections = new Set(openSections).add(parent.id);
+		}
 	});
 	function toggleSection(id: string, open: boolean) {
 		const next = new Set(openSections);
